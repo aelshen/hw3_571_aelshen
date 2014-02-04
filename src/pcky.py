@@ -117,8 +117,6 @@ def PCKY(data, grammar):
         else:
             ParsePrint(full_spans[maximum[1]])
         
-        print("")
-        
     #end for line in data:
 
 
@@ -127,7 +125,7 @@ def PCKY(data, grammar):
 #bracketed form until a terminal is produced
 def ParsePrint(trace):
     if len(trace.children) == 1:
-        print("(" + trace.label + " " + trace.children[0].strip("'") + ")", end='')
+        print("(" + trace.label + " " + trace.children[0][1:-1] + ")", end='')
         return
     else:
         print("(" + trace.label + " ", end='')
