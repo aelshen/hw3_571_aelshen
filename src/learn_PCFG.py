@@ -20,7 +20,6 @@ TERMINAL = re.compile(r"\((\w+)\s+([\w?!.,;:]+)\)")
 #-----------------------------------Main---------------------------------------
 #==============================================================================
 def main():
-    x = "(TOP (SQ (SQ' (VBZ Does) (NP (DT this) (NN flight))) (VP (VB serve) (NP_NN dinner))) (PUNC ?))"
     hw3 = PCFG(sys.argv[1])
     
     print("Hello, World!")
@@ -34,11 +33,50 @@ def main():
 #==============================================================================
 class PCFG:
     def __init__(self, file):
+        self.start_symbol = None
         self.LHS_count = defaultdict(int)
         self.pcfg = defaultdict(lambda: defaultdict(float))
-        
+        self.terminal_rules_by_daughter = defaultdict(set)
+        self.nonterminal_rules_by_daughter = defaultdict(lambda: defaultdict(set))
         self.CreateGrammar(file)
+        
+        
+        self.OrderRulesByChildren()
+        
+        
+        
+        self.PrintGrammar()
         x = 1
+    
+    
+    def OrderRulesByChildren(self):
+        #create an inverse dictionary for terminal rules such that 
+        #each terminal production maps to a POS tag, 
+        #create an inverse dictionary for nonterminal rules such that
+        #the left daughter of the rule maps to a dictionary of tuples of 
+        #(left daughter, right daughter), which maps to the parent of the rule
+        for LHS in self.pcfg:
+            for RHS in self.pcfg[LHS]:
+                if len(RHS) == 1:
+                    self.terminal_rules_by_daughter[RHS[0]].add(LHS)
+                elif len(RHS) == 2:
+                    self.nonterminal_rules_by_daughter[RHS[0]][RHS].add(LHS)
+    
+    def PrintGrammar(self):
+        output_file = open('trained.pcfg','w')
+        for RHS in self.pcfg[self.start_symbol]:
+            prob = self.pcfg[self.start_symbol][RHS]
+            output_file.write(self.start_symbol + " -> " + " ".join(RHS) + "\t[" + str(prob) + "]" + os.linesep)
+        output_file.write(os.linesep)
+        for LHS in self.pcfg:
+            if LHS == self.start_symbol:
+                continue
+            for RHS in self.pcfg[LHS]:
+                prob = self.pcfg[LHS][RHS]
+                output_file.write(LHS + " -> " + " ".join(RHS) + "\t[" + str(prob) + "]" + os.linesep)
+                
+            output_file.write(os.linesep)
+    
     
     def CreateGrammar(self, file):
         for line in open(file, 'r').readlines():
@@ -53,6 +91,9 @@ class PCFG:
             if line[i] != "(":
                 continue
             else:
+                if self.start_symbol == None:
+                    self.start_symbol = line[i + 1]
+                    
                 open_paren = 0
                 LHS = line[i + 1]
                 RHS = []
@@ -91,7 +132,7 @@ class PCFG:
         m = TERMINAL.findall(line)
         for terminal in m:
             LHS,RHS = terminal
-            RHS = "'" + RHS + "'"
+            RHS = tuple(["'" + RHS + "'"])
             self.LHS_count[LHS] += 1
             self.pcfg[LHS][RHS] += 1
     
