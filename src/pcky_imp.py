@@ -9,7 +9,8 @@ Created on Jan 29, 2014
 from __future__ import print_function
 import os
 import sys
-from learn_PCFG import PCFG
+from time import time
+from learn_PCFG_imp import PCFG
 from math import log
 from collections import defaultdict
 
@@ -42,6 +43,7 @@ def main():
 
 #Parse given data using the CKY algorithm
 def PCKY(data, grammar):
+    runtime = time()
     lines_parsed = 0
     total_parses = 0
     #read each line of the input data
@@ -51,11 +53,13 @@ def PCKY(data, grammar):
         sentence = line.strip().split()
                 
         #the (n+1)x(n+1) table needed for the cky algorithm
-        table = [[(None, 0.0) for x in xrange(len(sentence) + 1)] for x in xrange(len(sentence) + 1)]
+        table = [[(None, float("-inf")) for x in xrange(len(sentence) + 1)] for x in xrange(len(sentence) + 1)]
         back_trace = defaultdict(set)
         
         for j in xrange( 1, len(sentence) + 1 ):
             word = "'" + sentence[j - 1] + "'"
+            if word not in grammar.vocabulary:
+                word = "'UNK'"
             #list of tuples
             labels = []
             #get every preterminal that produces the current word
@@ -120,7 +124,9 @@ def PCKY(data, grammar):
         
     #end for line in data:
 
-
+    runtime = time() - runtime
+    print("Runtime (s): " + str(runtime))
+     
 
 #Recursively follows the lineage of a parent object, printing in simple 
 #bracketed form until a terminal is produced

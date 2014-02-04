@@ -9,6 +9,7 @@ Created on Jan 29, 2014
 from __future__ import print_function
 import os
 import sys
+from time import time
 from learn_PCFG import PCFG
 from math import log
 from collections import defaultdict
@@ -42,6 +43,7 @@ def main():
 
 #Parse given data using the CKY algorithm
 def PCKY(data, grammar):
+    runtime = time()
     lines_parsed = 0
     total_parses = 0
     #read each line of the input data
@@ -120,7 +122,9 @@ def PCKY(data, grammar):
         
     #end for line in data:
 
-
+    runtime = time() - runtime
+    print("Runtime (s): " + str(runtime))
+     
 
 #Recursively follows the lineage of a parent object, printing in simple 
 #bracketed form until a terminal is produced
