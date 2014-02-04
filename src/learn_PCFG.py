@@ -46,6 +46,8 @@ class PCFG:
             line = line.replace("(","( ").replace(")"," )").split()
             self.ExtractNonterminals(line)
         
+        self.CalculateProbabilites()
+        
     def ExtractNonterminals(self, line):
         for i in range( len(line) ):
             if line[i] != "(":
@@ -89,8 +91,17 @@ class PCFG:
         m = TERMINAL.findall(line)
         for terminal in m:
             LHS,RHS = terminal
+            RHS = "'" + RHS + "'"
             self.LHS_count[LHS] += 1
             self.pcfg[LHS][RHS] += 1
+    
+    def CalculateProbabilites(self):
+        for LHS in self.pcfg:
+            for RHS in self.pcfg[LHS]:
+                a = self.pcfg[LHS][RHS]
+                b = self.LHS_count[LHS]
+                
+                self.pcfg[LHS][RHS] = a / b
 #==============================================================================    
 #------------------------------------------------------------------------------
 #==============================================================================
