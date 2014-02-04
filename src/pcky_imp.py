@@ -109,7 +109,7 @@ def PCKY(data, grammar):
         for i in range( len(full_spans) ):
             #for any such span that begins with the start symbol of the grammar
             if full_spans[i].label == grammar.start_symbol:
-                if full_spans[i].logprob > maximum[0]:
+                if full_spans[i].logprob >= maximum[0]:
                     maximum = (full_spans[i].logprob, i)
 
         if maximum[1] == None:
