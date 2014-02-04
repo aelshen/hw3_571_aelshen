@@ -6,12 +6,13 @@ Created on Jan 29, 2014
 @author: Ahmad Elshenawy
 #==============================================================================
 '''
-
-import nltk
+from __future__ import print_function
 import os
 import sys
 from learn_PCFG import PCFG
+from math import log
 from collections import defaultdict
+
 #==============================================================================
 #--------------------------------Constants-------------------------------------
 #==============================================================================
@@ -47,14 +48,10 @@ def PCKY(data, grammar):
     for line in data:
         lines_parsed += 1
     
-        print(os.linesep + "Sentence #" + str(lines_parsed) + ": " + line)
-        sentence = line.strip()
-        
-        #tokenize the current sentence
-        sentence = nltk.word_tokenize(sentence)
-        
+        sentence = line.strip().split()
+                
         #the (n+1)x(n+1) table needed for the cky algorithm
-        table = [[None for x in xrange(len(sentence) + 1)] for x in xrange(len(sentence) + 1)]
+        table = [[(None, 0.0) for x in xrange(len(sentence) + 1)] for x in xrange(len(sentence) + 1)]
         back_trace = defaultdict(set)
         
         for j in xrange( 1, len(sentence) + 1 ):
@@ -63,7 +60,8 @@ def PCKY(data, grammar):
             labels = []
             #get every preterminal that produces the current word
             for LHS in grammar.terminal_rules_by_daughter[word]:
-                parent = Node(LHS, [word])
+                terminal_logprob = grammar.pcfg[LHS][tuple([word])]
+                parent = Node(LHS, [word], terminal_logprob)
                 labels.append(parent)
                 back_trace[(j-1,j)].add( parent )
             #end LHS in grammar.terminal_rules_by_daughter[word]:
@@ -74,8 +72,8 @@ def PCKY(data, grammar):
                 k = i + 1
                 LHS = []
                 while k <= j - 1:
-                    B = table[i][k][:]
-                    C = table[k][j][:]
+                    B = table[i][k]
+                    C = table[k][j]
                     
                     
                     for left_child in B:
@@ -85,9 +83,10 @@ def PCKY(data, grammar):
                                 #if a rule exists that produces this (left,right) pair
                                 if RHS in grammar.nonterminal_rules_by_daughter[left_child.label]: 
                                     for label in grammar.nonterminal_rules_by_daughter[left_child.label][RHS]:
+                                        logprob = grammar.pcfg[label][tuple(RHS)] + left_child.logprob + right_child.logprob
                                         #create an object to keep track of the parent, 
                                         #and the left and right children that led to it
-                                        parent = Node(label, [left_child, right_child])
+                                        parent = Node(label, [left_child, right_child], logprob)
                                         #save to a list of all possible parents for this j
                                         LHS.append(parent)
                                         #add this parent object to the backtrace, 
@@ -104,42 +103,47 @@ def PCKY(data, grammar):
         #end for j in range( 1,len(sentence) ):
         
         #lines_parsed += 1
-        count = 0
+        maximum = (float("-inf"), None)
+        full_spans = list( back_trace[(0, len(sentence) )] )
         #for any parses in the backtrace that cover the entire span of the sentence
-        for trace in back_trace[(0, len(sentence) )]:
+        for i in range( len(full_spans) ):
             #for any such span that begins with the start symbol of the grammar
-            if trace.label == grammar.start_symbol:
-                count += 1
-                print("Parse #" + str(count) + ":")
-                ParsePrint(trace)
+            if full_spans[i].label == grammar.start_symbol:
+                if full_spans[i].logprob > maximum[0]:
+                    maximum = (full_spans[i].logprob, i)
+
+        if maximum[1] == None:
+            print("_____---------_____", end='')
+        else:
+            ParsePrint(full_spans[maximum[1]])
         
-        print(str(count) + " Total Parse(s) for Sentence#" + str(lines_parsed) + os.linesep)
+        print("")
+        
     #end for line in data:
 
 
 
 #Recursively follows the lineage of a parent object, printing in simple 
 #bracketed form until a terminal is produced
-def ParsePrint(trace, indent = ""):
+def ParsePrint(trace):
     if len(trace.children) == 1:
-        print(indent + "(" + trace.label + "\t" + trace.children[0] + ")")
-        #ParsePrint(trace.children[0], indent + "   ")
+        print("(" + trace.label + " " + trace.children[0].strip("'") + ")", end='')
         return
     else:
-        print(indent + "(" + trace.label )
-        ParsePrint(trace.children[0], indent + "   ")
-        #print(indent + ")")
-        ParsePrint(trace.children[1], indent + "   ")
-        print(indent + ")")
+        print("(" + trace.label + " ", end='')
+        ParsePrint(trace.children[0])
+        ParsePrint(trace.children[1])
+        print(")", end='')
     
     
 #==============================================================================    
 #----------------------------------Classes-------------------------------------
 #==============================================================================
 class Node:
-    def __init__(self, label, children = []):
+    def __init__(self, label, children = [], logprob = float("-inf") ):
         self.label = label
         self.children = children
+        self.logprob = logprob
 #==============================================================================    
 #------------------------------------------------------------------------------
 #==============================================================================
