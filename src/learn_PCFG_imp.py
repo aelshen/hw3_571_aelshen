@@ -53,7 +53,7 @@ class PCFG:
         new_vocab = deepcopy(self.vocabulary)
         for word in self.vocabulary:
             if self.vocabulary[word] <= MIN_FREQ:
-                unk_words.append(word)
+                unk_words.append(tuple([word]))
         
         for LHS in self.pcfg:
             for RHS in self.pcfg[LHS]:
@@ -161,7 +161,7 @@ class PCFG:
             RHS = tuple(["'" + RHS + "'"])
             self.LHS_count[LHS] += 1
             self.pcfg[LHS][RHS] += 1
-            self.vocabulary[RHS] += 1
+            self.vocabulary[RHS[0]] += 1
             
     def CalculateProbabilites(self):
         for LHS in self.pcfg:

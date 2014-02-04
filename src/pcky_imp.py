@@ -58,16 +58,20 @@ def PCKY(data, grammar):
         
         for j in xrange( 1, len(sentence) + 1 ):
             word = "'" + sentence[j - 1] + "'"
-            if word not in grammar.vocabulary:
-                word = "'UNK'"
-            #list of tuples
             labels = []
-            #get every preterminal that produces the current word
-            for LHS in grammar.terminal_rules_by_daughter[word]:
-                terminal_logprob = grammar.pcfg[LHS][tuple([word])]
-                parent = Node(LHS, [word], terminal_logprob)
-                labels.append(parent)
-                back_trace[(j-1,j)].add( parent )
+            if word not in grammar.vocabulary:
+                for LHS in grammar.terminal_rules_by_daughter["'UNK'"]:
+                    terminal_logprob = grammar.pcfg[LHS][tuple(["'UNK'"])]
+                    parent = Node(LHS, [word[:-1] + "-UNK'"], terminal_logprob)
+                    labels.append(parent)
+                    back_trace[(j-1,j)].add( parent )
+
+            else:
+                for LHS in grammar.terminal_rules_by_daughter[word]:
+                    terminal_logprob = grammar.pcfg[LHS][tuple([word])]
+                    parent = Node(LHS, [word], terminal_logprob)
+                    labels.append(parent)
+                    back_trace[(j-1,j)].add( parent )
             #end LHS in grammar.terminal_rules_by_daughter[word]:
             table[j-1][j] = labels
 
