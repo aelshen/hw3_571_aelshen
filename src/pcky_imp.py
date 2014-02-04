@@ -40,8 +40,16 @@ def main():
 #==============================================================================    
 #---------------------------------Functions------------------------------------
 #==============================================================================
-
-#Parse given data using the CKY algorithm
+##-------------------------------------------------------------------------
+## PCKY()
+##-------------------------------------------------------------------------
+##    Description:    Use the PCKY algorithm to parse text 
+##
+##    Arguments:      data; test data to be parsed
+##                    grammar; pcfg grammar that has already been created
+##
+##    Calls:          ParsePrint()
+##-------------------------------------------------------------------------
 def PCKY(data, grammar):
     runtime = time()
     lines_parsed = 0
@@ -59,13 +67,17 @@ def PCKY(data, grammar):
         for j in xrange( 1, len(sentence) + 1 ):
             word = "'" + sentence[j - 1] + "'"
             labels = []
+            
+            
+            #if the current word is unknown from the training data, 
+            #search for all rules A -> UNK
             if word not in grammar.vocabulary:
                 for LHS in grammar.terminal_rules_by_daughter["'UNK'"]:
                     terminal_logprob = grammar.pcfg[LHS][tuple(["'UNK'"])]
                     parent = Node(LHS, [word[:-1] + "-UNK'"], terminal_logprob)
                     labels.append(parent)
                     back_trace[(j-1,j)].add( parent )
-
+            #else, proceed as expected for PCKY
             else:
                 for LHS in grammar.terminal_rules_by_daughter[word]:
                     terminal_logprob = grammar.pcfg[LHS][tuple([word])]
@@ -112,14 +124,18 @@ def PCKY(data, grammar):
         
         #lines_parsed += 1
         maximum = (float("-inf"), None)
+        
         full_spans = list( back_trace[(0, len(sentence) )] )
-        #for any parses in the backtrace that cover the entire span of the sentence
+
         for i in range( len(full_spans) ):
             #for any such span that begins with the start symbol of the grammar
             if full_spans[i].label == grammar.start_symbol:
+                #find the parse with the greatest probability
                 if full_spans[i].logprob >= maximum[0]:
                     maximum = (full_spans[i].logprob, i)
 
+        #if no parse was found, output a blank line, 
+        #else print the parse with the grates probability
         if maximum[1] == None:
             print(" ", end='')
         else:
@@ -132,8 +148,13 @@ def PCKY(data, grammar):
     print("Runtime (s): " + str(runtime))
      
 
-#Recursively follows the lineage of a parent object, printing in simple 
-#bracketed form until a terminal is produced
+##-------------------------------------------------------------------------
+## ParsePrint()
+##-------------------------------------------------------------------------
+##    Description:    Print a simlple bracket-structure for a backtrace.
+##
+##    Calls:          ParsePrint()
+##-------------------------------------------------------------------------
 def ParsePrint(trace):
     if len(trace.children) == 1:
         print("(" + trace.label + " " + trace.children[0][1:-1] + ")", end='')
@@ -148,6 +169,20 @@ def ParsePrint(trace):
 #==============================================================================    
 #----------------------------------Classes-------------------------------------
 #==============================================================================
+##-------------------------------------------------------------------------
+## Struct Node
+##-------------------------------------------------------------------------
+##    Description:    A struct used in CKY() to contain all rule information
+##
+##    Arguments:      file; a parsed text to be used for training
+##
+##
+##    Properties:     label; the LHS label of a rule (the 'A' of A -> B C)
+##                    children; a list of the left and right children of 
+##                          the rule (the 'B' and 'C' of A -> B C)
+##                    logprob; the logprob of the rule
+##
+##-------------------------------------------------------------------------
 class Node:
     def __init__(self, label, children = [], logprob = float("-inf") ):
         self.label = label
