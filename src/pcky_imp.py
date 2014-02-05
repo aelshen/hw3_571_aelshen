@@ -74,7 +74,7 @@ def PCKY(data, grammar):
             if word not in grammar.vocabulary:
                 for LHS in grammar.terminal_rules_by_daughter["'UNK'"]:
                     terminal_logprob = grammar.pcfg[LHS][tuple(["'UNK'"])]
-                    parent = Node(LHS, [word[:-1] + "-UNK'"], terminal_logprob)
+                    parent = Node(LHS, [word], terminal_logprob)
                     labels.append(parent)
                     back_trace[(j-1,j)].add( parent )
             #else, proceed as expected for PCKY

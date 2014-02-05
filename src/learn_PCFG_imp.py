@@ -102,22 +102,22 @@ class PCFG:
             if self.vocabulary[word] <= MIN_FREQ:
                 unk_words.append(tuple([word]))
         
-        for LHS in self.pcfg:
-            for RHS in self.pcfg[LHS]:
-                if len(RHS) == 1 and self.pcfg[LHS][RHS] <= MIN_FREQ:
-                    del new_pcfg[LHS][RHS]
-                    new_pcfg[LHS][tuple(["'UNK'"])] += 1
-                    new_vocab[RHS[0]] -= 1
+#         for LHS in self.pcfg:
+#             for RHS in self.pcfg[LHS]:
+#                 if len(RHS) == 1 and self.pcfg[LHS][RHS] <= MIN_FREQ:
+#                     del new_pcfg[LHS][RHS]
+#                     new_pcfg[LHS][tuple(["'UNK'"])] += 1
+#                     new_vocab[RHS[0]] -= 1
         
         #run through all rules, removing all rules that produce an unk_word
         #and replacing with a new production called UNK while removing
         #the unknown word from the vocabulary
-#         for LHS in self.pcfg:
-#             for RHS in self.pcfg[LHS]:
-#                 if RHS in unk_words:
-#                     del new_pcfg[LHS][RHS]
-#                     new_pcfg[LHS][tuple(["'UNK'"])] += 1
-#                     new_vocab[RHS] -= 1
+        for LHS in self.pcfg:
+            for RHS in self.pcfg[LHS]:
+                if RHS in unk_words:
+                    del new_pcfg[LHS][RHS]
+                    new_pcfg[LHS][tuple(["'UNK'"])] += self.pcfg[LHS][RHS]
+                    new_vocab[RHS] -= 1
          
         #recreate pcfg and vocabulary to now no longer include any
         #unk_words.
